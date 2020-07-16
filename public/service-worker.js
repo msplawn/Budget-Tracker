@@ -8,7 +8,7 @@ const FILES_TO_CACHE = [
     './icons/icon-512x512.png',
     "https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
     "https://cdn.jsdelivr.net/npm/chart.js@2.8.0", 
-    "./db.js"
+    "/db.js",
 
 ];
 
@@ -29,6 +29,7 @@ self.addEventListener("install", function (evt) {
 
 // activate
 self.addEventListener("activate", function (evt) {
+    console.log("Is it though??")
     evt.waitUntil(
         caches.keys().then(keyList => {
             return Promise.all(
@@ -47,6 +48,7 @@ self.addEventListener("activate", function (evt) {
 
 // fetch
 self.addEventListener("fetch", function (evt) {
+    console.log("222 Is it though??")
     if (evt.request.url.includes("/api/")) {
         evt.respondWith(
             caches.open(DATA_CACHE_NAME).then(cache => {
@@ -69,10 +71,15 @@ self.addEventListener("fetch", function (evt) {
         return;
     }
     evt.respondWith(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.match(evt.request).then(response => {
-                return response || fetch(evt.request);
-            });
+        fetch(evt.request).catch(function() {
+          return caches.match(evt.request).then(function(response) {
+            if (response) {
+              return response;
+            } else if (evt.request.headers.get("accept").includes("text/html")) {
+              // return the cached home page for all requests for html pages
+              return caches.match("/");
+            }
+          });
         })
-    );
+      );
 });
